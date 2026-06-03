@@ -19,15 +19,15 @@ The project exposes live system metrics, manages monitored servers, runs backgro
 
 ### Servers Dashboard
 
-![Servers dashboard](assets/servers-dashboard.png)
+<img src="./assets/servers-dashboard.png" alt="Servers dashboard" width="900">
 
 ### Immediate Health Check
 
-![Immediate health check](assets/health-check.png)
+<img src="./assets/health-check.png" alt="Immediate health check" width="900">
 
 ### Tests and Coverage
 
-![Tests and coverage](assets/tests-coverage.png)
+<img src="./assets/tests-coverage.png" alt="Tests and coverage" width="900">
 
 ## Project Structure
 
