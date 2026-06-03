@@ -15,6 +15,20 @@ The project exposes live system metrics, manages monitored servers, runs backgro
 - Streamlit dashboard with metrics, charts, server table, forms, and health checks
 - Pytest test suite with coverage above 75%
 
+## Screenshots
+
+### Servers Dashboard
+
+![Servers dashboard](assets/servers-dashboard.png)
+
+### Immediate Health Check
+
+![Immediate health check](assets/health-check.png)
+
+### Tests and Coverage
+
+![Tests and coverage](assets/tests-coverage.png)
+
 ## Project Structure
 
 ```text
@@ -31,6 +45,10 @@ devops-monitor/
 ├── tests/
 │   ├── test_metrics.py
 │   └── test_routes.py
+├── assets/
+│   ├── servers-dashboard.png
+│   ├── health-check.png
+│   └── tests-coverage.png
 ├── requirements.txt
 └── README.md
 ```
