@@ -73,12 +73,25 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Optional Makefile setup:
+
+```bash
+cp .env.example .env
+make init
+```
+
 ## Run the API
 
 From the project root:
 
 ```bash
 uvicorn api.main:app --reload --port 8000
+```
+
+Or with the Makefile:
+
+```bash
+make run
 ```
 
 Open Swagger UI:
@@ -151,11 +164,31 @@ http://localhost:8501
 pytest tests/ -v --cov=api --cov-report=term-missing
 ```
 
+Or with the Makefile:
+
+```bash
+make test
+```
+
 Current local result:
 
 ```text
 7 passed
 Coverage: 77%
+```
+
+## Makefile Commands
+
+```bash
+make help
+make init
+make run
+make build
+make test
+make test-api
+make run-container
+make stop
+make clean
 ```
 
 ## Endpoints
