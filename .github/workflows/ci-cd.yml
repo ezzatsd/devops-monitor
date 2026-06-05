@@ -10,10 +10,6 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  API_IMAGE: devops-monitor-api
-  DASHBOARD_IMAGE: devops-monitor-dashboard
-
 jobs:
   test:
     name: Test application
@@ -26,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install Python dependencies
         run: |
@@ -39,8 +35,8 @@ jobs:
       - name: Run tests
         run: make test
 
-  build:
-    name: Build and push Docker images
+  deploy:
+    name: Deploy to Azure App Service
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -56,53 +52,8 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D65A9A555734A3E9A1EDDD261A67DD4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_46808F1993CD4CD5B2BF37ED66666E27 }}
 
-      - name: Login to Azure Container Registry
-        run: az acr login --name ${{ secrets.ACR_NAME }}
-
-      - name: Build and push API image
-        run: |
-          docker build \
-            -f api/Dockerfile \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.API_IMAGE }}:${{ github.sha }} \
-            .
-
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.API_IMAGE }}:${{ github.sha }}
-
-      - name: Build and push dashboard image
-        run: |
-          docker build \
-            -f dashboard/Dockerfile \
-            -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.DASHBOARD_IMAGE }}:${{ github.sha }} \
-            .
-
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.DASHBOARD_IMAGE }}:${{ github.sha }}
-
-  deploy:
-    name: Deploy to Azure Container Apps
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Azure login
-        uses: azure/login@v2
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_19A8CFB7585740B8850AFC6630FD8235 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D65A9A555734A3E9A1EDDD261A67DD4 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_46808F1993CD4CD5B2BF37ED66666E27 }}
-
-      - name: Deploy API container app
-        run: |
-          az containerapp update \
-            --name devops-monitor-api \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.API_IMAGE }}:${{ github.sha }} \
-            --set-env-vars API_KEY=${{ secrets.API_KEY }}
-
-      - name: Deploy dashboard container app
-        run: |
-          az containerapp update \
-            --name devops-monitor-dashboard \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.DASHBOARD_IMAGE }}:${{ github.sha }} \
-            --set-env-vars API_BASE_URL=${{ secrets.API_BASE_URL }} API_KEY=${{ secrets.API_KEY }}
+          app-name: Dashbord
+          package: .
