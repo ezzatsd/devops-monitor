@@ -278,6 +278,18 @@ No secrets are stored in the repository.
 
 ## Screenshots
 
+### Azure Dashboard
+
+<img src="./assets/azure-dashboard.png" alt="Azure dashboard with live metrics" width="900">
+
+### Swagger API Documentation
+
+<img src="./assets/swagger-ui.png" alt="FastAPI Swagger UI" width="900">
+
+### Tests and Coverage
+
+<img src="./assets/tests-coverage-current.png" alt="Tests passing with coverage above 75 percent" width="900">
+
 ### Servers Dashboard
 
 <img src="./assets/servers-dashboard.png" alt="Servers dashboard" width="900">
@@ -285,7 +297,3 @@ No secrets are stored in the repository.
 ### Immediate Health Check
 
 <img src="./assets/health-check.png" alt="Immediate health check" width="900">
-
-### Tests and Coverage
-
-<img src="./assets/tests-coverage.png" alt="Tests and coverage" width="900">
