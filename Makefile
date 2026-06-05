@@ -3,63 +3,79 @@ include .env
 export
 endif
 
-APP_NAME ?= devops-monitor
-IMAGE_NAME ?= devops-monitor
-CONTAINER_NAME ?= devops-monitor-api
-HOST ?= 127.0.0.1
-PORT ?= 8000
-CONTAINER_PORT ?= 8000
-API_KEY ?= demo-key
 PYTHON ?= python3
 VENV ?= .venv
-PIP := $(VENV)/bin/pip
-PY := $(VENV)/bin/python
+COURSE_VENV ?= ../../../.venv
+PY := $(shell if [ -x "$(VENV)/bin/python" ]; then echo "$(VENV)/bin/python"; elif [ -x "$(COURSE_VENV)/bin/python" ]; then echo "$(COURSE_VENV)/bin/python"; else echo "$(PYTHON)"; fi)
+PIP := $(PY) -m pip
 
-.PHONY: help init run build test test-api run-container stop clean
+API_HOST ?= 127.0.0.1
+API_PORT ?= 8000
+DASHBOARD_PORT ?= 8501
+API_KEY ?= demo-key
+API_BASE_URL ?= http://localhost:8000
+
+.PHONY: help init up down logs dev run-api run-dashboard test lint build test-api clean
 
 help:
 	@echo "Available commands:"
 	@echo "  make init          - Create a virtual environment and install dependencies"
-	@echo "  make run           - Run the FastAPI app on the configured PORT"
-	@echo "  make build         - Build the Docker image"
-	@echo "  make test          - Run the unit tests"
-	@echo "  make test-api      - Run HTTP checks against the running API"
-	@echo "  make run-container - Run the app in a Docker container"
-	@echo "  make stop          - Stop the running container"
-	@echo "  make clean         - Remove stopped containers"
+	@echo "  make up            - Start the full Docker Compose stack"
+	@echo "  make down          - Stop the Docker Compose stack and volumes"
+	@echo "  make logs          - Follow Docker Compose logs"
+	@echo "  make dev           - Run API and dashboard locally without Docker"
+	@echo "  make run-api       - Run the FastAPI API locally"
+	@echo "  make run-dashboard - Run the Streamlit dashboard locally"
+	@echo "  make test          - Run tests with coverage >= 75%"
+	@echo "  make lint          - Run flake8"
+	@echo "  make build         - Build Docker images"
+	@echo "  make test-api      - Run HTTP checks against a running API"
+	@echo "  make clean         - Remove local Python and test cache files"
 
 init:
 	$(PYTHON) -m venv $(VENV)
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
+	$(VENV)/bin/python -m pip install --upgrade pip
+	$(VENV)/bin/python -m pip install -r requirements.txt
 
-run:
-	$(PY) -m uvicorn api.main:app --host $(HOST) --port $(PORT)
+up:
+	docker compose up --build -d
 
-build:
-	docker build -t $(IMAGE_NAME) .
+down:
+	docker compose down -v
+
+logs:
+	docker compose logs -f
+
+dev:
+	@echo "Starting API on http://$(API_HOST):$(API_PORT)"
+	@echo "Starting dashboard on http://localhost:$(DASHBOARD_PORT)"
+	@API_KEY=$(API_KEY) $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT) & \
+	API_BASE_URL=$(API_BASE_URL) API_KEY=$(API_KEY) $(PY) -m streamlit run dashboard/app.py --server.port $(DASHBOARD_PORT)
+
+run-api:
+	API_KEY=$(API_KEY) $(PY) -m uvicorn api.main:app --host $(API_HOST) --port $(API_PORT)
+
+run-dashboard:
+	API_BASE_URL=$(API_BASE_URL) API_KEY=$(API_KEY) $(PY) -m streamlit run dashboard/app.py --server.port $(DASHBOARD_PORT)
 
 test:
-	$(PY) -m pytest tests/ -v --cov=api --cov-report=term-missing
+	$(PY) -m pytest tests/ -v --cov=api --cov-fail-under=75
+
+lint:
+	$(PY) -m flake8 api/ dashboard/ tests/
+
+build:
+	docker compose build
 
 test-api:
-	curl -f http://$(HOST):$(PORT)/health
-	curl -f http://$(HOST):$(PORT)/metrics
-	curl -f http://$(HOST):$(PORT)/servers
-	curl -f -X POST http://$(HOST):$(PORT)/servers \
+	curl -f http://$(API_HOST):$(API_PORT)/health
+	curl -f http://$(API_HOST):$(API_PORT)/metrics
+	curl -f http://$(API_HOST):$(API_PORT)/servers
+	curl -f -X POST http://$(API_HOST):$(API_PORT)/servers \
 		-H "Content-Type: application/json" \
 		-H "X-API-Key: $(API_KEY)" \
-		-d '{"name":"make-test","host":"127.0.0.1","port":$(PORT)}'
-
-run-container:
-	docker run --rm -d \
-		--name $(CONTAINER_NAME) \
-		-p $(PORT):$(CONTAINER_PORT) \
-		-e API_KEY=$(API_KEY) \
-		$(IMAGE_NAME)
-
-stop:
-	docker stop $(CONTAINER_NAME)
+		-d '{"name":"make-test","host":"127.0.0.1","port":$(API_PORT)}'
 
 clean:
-	docker container prune -f
+	find . -type d -name "__pycache__" -prune -exec rm -rf {} +
+	rm -rf .pytest_cache .coverage htmlcov

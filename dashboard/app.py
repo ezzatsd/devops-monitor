@@ -1,3 +1,4 @@
+import os
 import time
 from collections import deque
 
@@ -6,8 +7,8 @@ import pandas as pd
 import streamlit as st
 
 
-API_BASE = "http://localhost:8000"
-DEFAULT_API_KEY = "demo-key"
+API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
+DEFAULT_API_KEY = os.getenv("API_KEY", "demo-key")
 
 
 st.set_page_config(
@@ -117,7 +118,10 @@ with tab_metrics:
 with tab_servers:
     st.subheader("Monitored Servers")
 
-    status_filter = st.selectbox("Filter by status", ["All", "unknown", "UP", "DEGRADED", "DOWN"])
+    status_filter = st.selectbox(
+        "Filter by status",
+        ["All", "unknown", "UP", "DEGRADED", "DOWN"],
+    )
 
     try:
         servers = fetch_servers(status_filter)
@@ -141,7 +145,12 @@ with tab_servers:
     with st.form("register_server", clear_on_submit=True):
         name = st.text_input("Name", placeholder="api-prod")
         host = st.text_input("Host", placeholder="127.0.0.1")
-        port = st.number_input("Port", min_value=1, max_value=65535, value=8000)
+        port = st.number_input(
+            "Port",
+            min_value=1,
+            max_value=65535,
+            value=8000,
+        )
         submitted = st.form_submit_button("Register")
 
     if submitted:
@@ -160,14 +169,22 @@ with tab_servers:
                 st.success(f"Registered {name}.")
                 st.rerun()
             except httpx.HTTPStatusError as error:
-                st.error(f"API returned {error.response.status_code}: {error.response.text}")
+                st.error(
+                    f"API returned {error.response.status_code}: "
+                    f"{error.response.text}"
+                )
             except httpx.HTTPError as error:
                 st.error(f"Could not register server: {error}")
 
     if servers:
         st.divider()
         st.subheader("Immediate Health Check")
-        server_options = {server["id"]: f"{server['name']} ({server['host']}:{server['port']})" for server in servers}
+        server_options = {
+            server["id"]: (
+                f"{server['name']} ({server['host']}:{server['port']})"
+            )
+            for server in servers
+        }
         selected_id = st.selectbox(
             "Server",
             list(server_options.keys()),
@@ -176,10 +193,15 @@ with tab_servers:
 
         if st.button("Run health check"):
             try:
-                response = httpx.post(f"{API_BASE}/servers/{selected_id}/check", timeout=5.0)
+                response = httpx.post(
+                    f"{API_BASE}/servers/{selected_id}/check",
+                    timeout=5.0,
+                )
                 response.raise_for_status()
                 clear_api_cache()
-                st.success(f"Health check completed: {response.json()['status']}")
+                st.success(
+                    f"Health check completed: {response.json()['status']}"
+                )
                 st.rerun()
             except httpx.HTTPError as error:
                 st.error(f"Could not run health check: {error}")

@@ -5,7 +5,11 @@ import httpx
 from api.models import Server
 
 
-async def poll_server(server_id: int, url: str, store: dict[int, Server]) -> None:
+async def poll_server(
+    server_id: int,
+    url: str,
+    store: dict[int, Server],
+) -> None:
     """Check one server and update its status in the shared store."""
     server = store.get(server_id)
     if server is None:
