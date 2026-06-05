@@ -10,8 +10,18 @@ import pandas as pd
 import streamlit as st
 
 
-API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
 DEFAULT_API_KEY = os.getenv("API_KEY", "demo-key")
+IS_AZURE_WEB_APP = bool(os.getenv("WEBSITE_SITE_NAME"))
+EMBEDDED_API_PORT = int(os.getenv("EMBEDDED_API_PORT", "9000"))
+
+
+def _default_api_base() -> str:
+    if IS_AZURE_WEB_APP:
+        return f"http://127.0.0.1:{EMBEDDED_API_PORT}"
+    return "http://localhost:8000"
+
+
+API_BASE = os.getenv("API_BASE_URL", _default_api_base())
 
 
 def _is_port_open(host: str, port: int) -> bool:
@@ -23,13 +33,17 @@ def _is_port_open(host: str, port: int) -> bool:
 def _should_start_embedded_api() -> bool:
     parsed_api = urlparse(API_BASE)
     is_local_api = parsed_api.hostname in {"localhost", "127.0.0.1"}
-    is_azure_web_app = bool(os.getenv("WEBSITE_SITE_NAME"))
     explicit_enabled = os.getenv("ENABLE_EMBEDDED_API", "").lower() == "true"
-    return is_local_api and (is_azure_web_app or explicit_enabled)
+    return is_local_api and (IS_AZURE_WEB_APP or explicit_enabled)
 
 
 def _start_embedded_api() -> None:
-    if not _should_start_embedded_api() or _is_port_open("127.0.0.1", 8000):
+    parsed_api = urlparse(API_BASE)
+    api_port = parsed_api.port or 80
+    if (
+        not _should_start_embedded_api()
+        or _is_port_open("127.0.0.1", api_port)
+    ):
         return
 
     def run_api() -> None:
@@ -38,7 +52,7 @@ def _start_embedded_api() -> None:
         uvicorn.run(
             "api.main:app",
             host="127.0.0.1",
-            port=8000,
+            port=api_port,
             log_level="info",
         )
 
