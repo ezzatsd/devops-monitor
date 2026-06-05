@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   API_IMAGE: devops-monitor-api
   DASHBOARD_IMAGE: devops-monitor-dashboard
@@ -44,7 +48,9 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_19A8CFB7585740B8850AFC6630FD8235 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D65A9A555734A3E9A1EDDD261A67DD4 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_46808F1993CD4CD5B2BF37ED66666F27 }}
 
       - name: Login to ACR
         run: az acr login --name ${{ secrets.ACR_NAME }}
@@ -67,7 +73,9 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_19A8CFB7585740B8850AFC6630FD8235 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7D65A9A555734A3E9A1EDDD261A67DD4 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_46808F1993CD4CD5B2BF37ED66666F27 }}
 
       - name: Deploy API container app
         run: |
